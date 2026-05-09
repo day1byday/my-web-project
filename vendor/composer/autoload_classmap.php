@@ -28,6 +28,9 @@ return [
     'app\ExceptionHandle' => '../app/ExceptionHandle.php',
     'app\Request' => '../app/Request.php',
     'app\controller\Index' => '../app/controller/Index.php',
+    'app\controller\Login' => '../app/controller/Login.php',
+    'app\controller\TpCompare' => '../app/controller/TpCompare.php',
+    'app\model\User' => '../app/model/User.php',
     'think\App' => 'topthink/framework/src/think/App.php',
     'think\Cache' => 'topthink/framework/src/think/Cache.php',
     'think\Collection' => 'topthink/think-helper/src/Collection.php',
@@ -276,4 +279,5 @@ return [
     'think\tests\ViewTest' => 'topthink/framework/tests/ViewTest.php',
     'think\validate\ValidateRule' => 'topthink/framework/src/think/validate/ValidateRule.php',
     'think\view\driver\Php' => 'topthink/framework/src/think/view/driver/Php.php',
+    'db\db_user' => '../db/db_user.php',
 ];

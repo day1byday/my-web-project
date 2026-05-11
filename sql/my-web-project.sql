@@ -17,3 +17,20 @@ CREATE TABLE IF NOT EXISTS `user` (
     `isvalid` tinyint(3) NOT NULL DEFAULT '1' COMMENT '有效性',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户登录表';
+
+CREATE TABLE IF NOT EXISTS `products` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `name` varchar(100) NOT NULL,
+    `price` decimal(10,2) DEFAULT '0.00',
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品测试表';
+
+CREATE TABLE IF NOT EXISTS `orders` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `order_no` varchar(50) NOT NULL,
+    `user_id` int NOT NULL,
+    `price` decimal(10,2) DEFAULT '0.00',
+    `create_time` int DEFAULT '0',
+    `product_id` int DEFAULT '0',
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单测试表';

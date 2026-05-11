@@ -5,6 +5,7 @@ use app\BaseController;
 use app\model\User;
 use think\facade\View;
 use think\facade\Request;
+use think\App;
 
 /**
  * ============================================================
@@ -27,15 +28,20 @@ use think\facade\Request;
  */
 class Login extends BaseController
 {
+    /**
+     * User 模型实例（构造一次，所有方法共用）
+     * @var User
+     */
+    protected $userModel;
+    protected $viewModel;
 
-//    function __construct()
-//    {
-//        parent::__construct();
-//        require_once('model/User.php');
-//        $this->model = new User();
-//
-//
-//    }
+    public function __construct(App $app)
+    {
+        parent::__construct($app);
+        $this->userModel = new User();
+        $this->viewModel = new View();
+    }
+    
     /**
      * 首页 - 用户列表（演示 Model 查询 + View 传参）
      * 浏览器访问: http://localhost:8001/login
@@ -45,17 +51,17 @@ class Login extends BaseController
         // === 视图赋值 ===
         // TP5: $this->assign('title', '用户管理');
         // TP6: View::assign() 或 $this->view->assign()
-        View::assign('title', '用户管理 - TP6 示例');
+        $this->viewModel->assign('title', '用户管理 - TP6 示例');
 
         // === 模型查询 ===
-        $users = User::get_list();
+        $users = $this->userModel->get_list();
 
         // === 视图渲染 ===
         // TP5: return $this->fetch('index', ['users' => $users]);
         // TP6: View::fetch() 或 return view()
         //      建议用 View::fetch() 风格更统一
-        View::assign('users', $users);
-        return View::fetch('login/index');
+        $this->viewModel->assign('users', $users);
+        return $this->viewModel->fetch('login/index');
     }
 
     /**
@@ -65,11 +71,11 @@ class Login extends BaseController
     public function loginPage()
     {
 
-        View::assign('title', '用户登录 - TP6 示例');
+        $this->viewModel->assign('title', '用户登录 - TP6 示例');
 //        $data['title'] = '用户登录';
         // TP5: return $this->fetch();
         // TP6: return View::fetch();
-        return View::fetch('login/login');//, ['title' => '用户登录']
+        return $this->viewModel->fetch('login/login');//, ['title' => '用户登录']
     }
 
     /**
@@ -104,9 +110,9 @@ class Login extends BaseController
         // ============================================
         // 3. 模型查询
         // ============================================
-        // TP5: User::where('username', $username)->find();
+        // TP5: $this->userModel->where('username', $username)->find();
         // TP6: 完全一致
-        $user = User::findByUsername($username);
+        $user = $this->userModel->findByUsername($username);
 
         if (!$user) {
             return json(['code' => 1, 'msg' => '用户不存在']);
@@ -158,9 +164,9 @@ class Login extends BaseController
      */
     public function profile($id)
     {
-        // TP5: User::get($id) 或 User::find($id)
+        // TP5: $this->userModel->get($id) 或 $this->userModel->find($id)
         // TP6: 完全一致
-        $user = User::find($id);
+        $user = $this->userModel->find($id);
 
         if (!$user) {
             return json(['code' => 1, 'msg' => '用户不存在']);

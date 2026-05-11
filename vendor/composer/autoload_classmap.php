@@ -279,5 +279,8 @@ return [
     'think\tests\ViewTest' => 'topthink/framework/tests/ViewTest.php',
     'think\validate\ValidateRule' => 'topthink/framework/src/think/validate/ValidateRule.php',
     'think\view\driver\Php' => 'topthink/framework/src/think/view/driver/Php.php',
+    'db\Base' => '../db/Base.php',
+    'db\db_order' => '../db/db_order.php',
+    'db\db_product' => '../db/db_product.php',
     'db\db_user' => '../db/db_user.php',
 ];

@@ -45,6 +45,8 @@ Route::group('login', function () {
     Route::post('doLogin', 'Login/doLogin');
     // GET: 动态路由传参
     Route::get('profile/:id', 'Login/profile');
+    // GET: 用户列表 API (JSON接口 - 供 Vue3 SPA 使用)
+    Route::get('userList', 'Login/userList');
     // GET: Db 门面查询测试
     Route::get('dbTest', 'Login/dbTest');
 });
@@ -53,3 +55,10 @@ Route::group('login', function () {
 // TP5: 需要手动写 7 条路由
 // TP6: Route::resource('user', 'User') 一键生成
 // Route::resource('user', 'User');
+
+// ---- 生产环境: SPA 兜底 ----
+// 所有未匹配路由返回 Vue3 SPA 入口，API 路由优先匹配不受影响
+// 开发环境用 localhost:3000 (Vite)，此规则不干扰
+Route::miss(function () {
+    return response(file_get_contents(app()->getRootPath() . 'public/static/index.html'));
+});

@@ -51,7 +51,7 @@ class Login extends BaseController
         // === 视图赋值 ===
         // TP5: $this->assign('title', '用户管理');
         // TP6: View::assign() 或 $this->view->assign()
-        $this->viewModel->assign('title', '用户管理 - TP6 示例');
+//        $this->viewModel->assign('title', '用户管理 - TP6 示例');
 
         // === 模型查询 ===
         $users = $this->userModel->get_list();
@@ -60,8 +60,11 @@ class Login extends BaseController
         // TP5: return $this->fetch('index', ['users' => $users]);
         // TP6: View::fetch() 或 return view()
         //      建议用 View::fetch() 风格更统一
-        $this->viewModel->assign('users', $users);
-        return $this->viewModel->fetch('login/index');
+//        $this->viewModel->assign('users', $users);
+//        return $this->viewModel->fetch('login/index');
+        $data['title'] = '用户管理 - TP6 示例';
+        $data['users'] = $users;
+        return view('login/index',$data);
     }
 
     /**
@@ -71,11 +74,12 @@ class Login extends BaseController
     public function loginPage()
     {
 
-        $this->viewModel->assign('title', '用户登录 - TP6 示例');
-//        $data['title'] = '用户登录';
+//        $this->viewModel->assign('title', '用户登录 - TP6 示例');
+        $data['title'] = '用户登录';
         // TP5: return $this->fetch();
         // TP6: return View::fetch();
-        return $this->viewModel->fetch('login/login');//, ['title' => '用户登录']
+//        return $this->viewModel->fetch('login/login');//, ['title' => '用户登录']
+        return view('login/login',$data);
     }
 
     /**
@@ -181,6 +185,27 @@ class Login extends BaseController
                 'status'   => $user->status,
             ],
         ]);
+    }
+
+    /**
+     * 用户列表 API（JSON）- 供 Vue3 SPA 调用
+     * GET /login/userList
+     */
+    public function userList()
+    {
+        $users = $this->userModel->get_list();
+        $list = [];
+        foreach ($users as $user) {
+            $list[] = [
+                'id'              => $user['id'],
+                'username'        => $user['username'],
+                'email'           => $user['email'],
+                'status'          => $user['status'],
+                'last_login_time' => $user['last_login_time'],
+                'create_time'     => $user['create_time'],
+            ];
+        }
+        return json(['code' => 0, 'data' => $list, 'msg' => 'success']);
     }
 
     /**

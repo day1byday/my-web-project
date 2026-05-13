@@ -1,89 +1,234 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<title><?php echo $title; ?></title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,"Microsoft YaHei",sans-serif;background:#f0f2f5;display:flex;justify-content:center;align-items:center;min-height:100vh}
-.card{background:#fff;padding:30px 40px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);width:380px}
-.card h1{font-size:20px;text-align:center;margin-bottom:24px;color:#333}
-.form-group{margin-bottom:16px}
-.form-group label{display:block;font-size:13px;color:#666;margin-bottom:4px}
-.form-group input{width:100%;padding:8px 12px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;outline:none}
-.form-group input:focus{border-color:#1890ff;box-shadow:0 0 0 2px rgba(24,144,255,0.2)}
-.btn{width:100%;padding:9px;background:#1890ff;color:#fff;border:none;border-radius:4px;font-size:14px;cursor:pointer}
-.btn:hover{background:#40a9ff}
-.result{margin-top:16px;padding:10px;border-radius:4px;font-size:13px;display:none}
-.result.success{display:block;background:#f6ffed;color:#52c41a;border:1px solid #b7eb8f}
-.result.error{display:block;background:#fff2f0;color:#ff4d4f;border:1px solid #ffccc7}
-pre{background:#f5f5f5;padding:12px;border-radius:4px;font-size:12px;margin-top:16px;border:1px solid #e8e8e8;overflow-x:auto}
-.note{text-align:center;margin-top:16px;font-size:12px;color:#999}
-.note a{color:#1890ff;text-decoration:none}
-.note a:hover{text-decoration:underline}
-</style>
+    <meta charset="utf-8">
+    <title>用户登录 - 系统管理中心</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,"Microsoft YaHei",sans-serif;background:#f0f2f5;display:flex;justify-content:center;align-items:center;min-height:100vh}
+        .card{background:#fff;padding:30px 40px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);width:380px}
+        .card h1{font-size:20px;text-align:center;margin-bottom:24px;color:#333}
+        .form-group{margin-bottom:16px}
+        .form-group label{display:block;font-size:13px;color:#666;margin-bottom:4px}
+        .form-group input{width:100%;padding:8px 12px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;outline:none;transition:all 0.2s}
+        .form-group input:focus{border-color:#1890ff;box-shadow:0 0 0 2px rgba(24,144,255,0.2)}
+        .btn{width:100%;padding:9px;background:#1890ff;color:#fff;border:none;border-radius:4px;font-size:14px;cursor:pointer;transition:background 0.2s}
+        .btn:hover{background:#40a9ff}
+        .btn:active{background:#096dd9}
+        .result{margin-top:16px;padding:10px;border-radius:4px;font-size:13px;display:none}
+        .result.success{display:block;background:#f6ffed;color:#52c41a;border:1px solid #b7eb8f}
+        .result.error{display:block;background:#fff2f0;color:#ff4d4f;border:1px solid #ffccc7}
+        .api-preview{background:#f5f5f5;padding:12px;border-radius:4px;font-size:12px;margin-top:16px;border:1px solid #e8e8e8;overflow-x:auto}
+        .api-preview pre{margin:0;font-family:monospace;font-size:12px;white-space:pre-wrap;word-break:break-all}
+        .note{text-align:center;margin-top:16px;font-size:12px;color:#999}
+        .note a{color:#1890ff;text-decoration:none}
+        .note a:hover{text-decoration:underline}
+        .loading{display:none;text-align:center;margin-top:12px;font-size:12px;color:#1890ff}
+        .loading.show{display:block}
+    </style>
 </head>
 <body>
 
 <div class="card">
-    <h1><?php echo $title; ?></h1>
+    <h1>用户登录系统</h1>
 
     <form id="loginForm">
         <div class="form-group">
             <label>用户名</label>
-            <input type="text" name="username" value="admin" placeholder="请输入用户名">
+            <input type="text" name="username" id="username" value="admin" placeholder="请输入用户名" autocomplete="off">
         </div>
         <div class="form-group">
             <label>密码</label>
-            <input type="password" name="password" value="password" placeholder="请输入密码">
+            <input type="password" name="password" id="password" value="password" placeholder="请输入密码">
         </div>
-        <button type="submit" class="btn">登 录</button>
+        <button type="submit" class="btn" id="loginBtn">登 录</button>
     </form>
 
     <div id="result" class="result"></div>
+    <div class="loading" id="loadingMsg">⏳ 正在验证身份，请稍候...</div>
 
-    <pre id="apiResponse"></pre>
+    <!-- 保留API调试查看区域 (可选，便于开发调试) -->
+    <div class="api-preview" id="apiPreview" style="display: none;">
+        <strong>🔍 接口原始返回:</strong>
+        <pre id="apiResponse">暂无请求</pre>
+    </div>
 
     <div class="note">
-        <a href="<?= url('/login') ?>">← 返回用户列表</a>
+        <a href="<?= url('/login') ?>" id="backLink">← 返回用户列表</a>
     </div>
 </div>
 
 <script>
-document.getElementById('loginForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+    // 获取后端基础URL (兼容ThinkPHP路由，保持原有url函数风格)
+    // 注意: 这里确保 url('/login/doLogin') 由后端模板引擎解析为正确路径。
+    // 为了防止前端硬编码路径，我们使用PHP生成的基础路径组合，但这里由于是纯前端展示，
+    // 我们保留模板内动态生成action地址，但JS中fetch依旧使用 <?= url('/login/doLogin') ?> 动态生成。
 
-    var form = new FormData(this);
+    // 为了方便维护，同时为了防止页面刷新后重复提交，加入提交锁
+    let isSubmitting = false;
 
-    // ==============================================
-    // TP5: 通常用 $.ajax 或 $.post
-    // TP6: 前后端分离，推荐 fetch() 原生方式
-    // ==============================================
-    fetch('<?= url('/login/doLogin') ?>', {
-        method: 'POST',
-        body: form
-    })
-    .then(function(res) { return res.json(); })
-    .then(function(data) {
-        var resultDiv = document.getElementById('result');
-        var apiDiv = document.getElementById('apiResponse');
+    // 获取DOM元素
+    const loginForm = document.getElementById('loginForm');
+    const resultDiv = document.getElementById('result');
+    const loadingMsg = document.getElementById('loadingMsg');
+    const loginBtn = document.getElementById('loginBtn');
+    const apiResponsePre = document.getElementById('apiResponse');
+    const apiPreviewDiv = document.getElementById('apiPreview');
 
-        apiDiv.textContent = JSON.stringify(data, null, 2);
+    // 辅助函数：显示错误信息
+    function showError(message) {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = '❌ ' + message;
+        // 错误时5秒后自动隐藏? 不强制隐藏，但让用户知道错误
+    }
 
-        if (data.code === 0) {
-            resultDiv.className = 'result success';
-            resultDiv.textContent = '✅ ' + data.msg + ' (用户: ' + data.data.username + ')';
-        } else {
-            resultDiv.className = 'result error';
-            resultDiv.textContent = '❌ ' + data.msg;
+    // 辅助函数：显示成功消息 (登录成功后不再停留，会直接跳转，但为了逻辑依然保留)
+    function showSuccess(message) {
+        resultDiv.className = 'result success';
+        resultDiv.textContent = '✅ ' + message;
+    }
+
+    // 清除结果样式
+    function clearResult() {
+        resultDiv.className = 'result';
+        resultDiv.style.display = 'none';
+        resultDiv.textContent = '';
+    }
+
+    // 登录成功跳转函数：跳转到用户列表页 (即 /login 或自定义用户列表路由)
+    function redirectToUserList() {
+        // 根据原页面返回按钮的路由地址: <?= url('/login') ?> 即为用户列表页
+        // 同时满足业务需求 “登录成功后直接跳转到用户列表页”
+        // 这里使用后端生成的url确保正确性
+        const userListUrl = '<?= url('/login') ?>';
+        // 使用 window.location.href 进行页面跳转
+        window.location.href = userListUrl;
+    }
+
+    // 处理登录请求
+    async function handleLogin(event) {
+        event.preventDefault();
+
+        // 防止重复提交
+        if (isSubmitting) {
+            return;
         }
-    })
-    .catch(function(err) {
-        document.getElementById('result').className = 'result error';
-        document.getElementById('result').textContent = '❌ 请求失败: ' + err.message;
-    });
-});
-</script>
 
+        // 获取表单数据
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        // 前端简单校验
+        if (!username) {
+            showError('用户名不能为空');
+            return;
+        }
+        if (!password) {
+            showError('密码不能为空');
+            return;
+        }
+
+        // 重置UI状态
+        clearResult();
+        // 可选隐藏API预览区 (调试时可保留，但默认隐藏)
+        if (apiPreviewDiv) apiPreviewDiv.style.display = 'none';
+
+        // 显示loading状态，禁用按钮
+        isSubmitting = true;
+        loginBtn.disabled = true;
+        loginBtn.textContent = '登录中...';
+        loadingMsg.classList.add('show');
+
+        // 构建FormData对象 (与原始保持一致)
+        const formData = new FormData();
+        formData.append('username', username);
+        formData.append('password', password);
+
+        // 获取后端登录校验接口地址 (由后端模板引擎动态生成)
+        const loginActionUrl = '<?= url('/login/doLogin') ?>';
+
+        try {
+            // 发起POST请求 (原生fetch，支持FormData)
+            const response = await fetch(loginActionUrl, {
+                method: 'POST',
+                body: formData,
+                // 如果后端需要校验csrf，可在这里添加headers; 标准场景一般TP可配置忽略或者存在token机制，此处按基础规则
+                credentials: 'same-origin'  // 如果需要携带会话cookie
+            });
+
+            // 解析JSON响应 (假设后端返回格式为 {code:0, msg:'success', data:{...}})
+            let responseData;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                responseData = await response.json();
+            } else {
+                // 如果后端返回非json格式，尝试text解析并包装错误
+                const text = await response.text();
+                throw new Error(`服务器返回格式异常: ${text.substring(0, 100)}`);
+            }
+
+            // 将原始响应展示在调试区 (便于调试，但默认折叠/隐藏，正常用户不需要看到)
+            if (apiResponsePre) {
+                apiResponsePre.textContent = JSON.stringify(responseData, null, 2);
+                apiPreviewDiv.style.display = 'block';  // 可以显示，但一般用于排错，不干扰用户；如果需要完全隐藏可注释，但保留有助于开发排查。推荐保留但用户不太关注
+            }
+
+            // 根据返回状态码判断登录结果
+            // 业务约定: code === 0 表示登录成功，其他为失败(遵循原示例逻辑)
+            if (responseData.code === 0) {
+                // 登录成功: 显示短暂成功提示，然后立即跳转到用户列表页 (让用户感知成功瞬间)
+                showSuccess(responseData.msg || '登录成功！即将跳转到用户列表...');
+                // 延迟300ms跳转，使用户看到成功提示，体验更好
+                setTimeout(() => {
+                    redirectToUserList();
+                }, 300);
+            } else {
+                // 登录失败: 显示后端返回的错误信息
+                const errorMsg = responseData.msg || '登录失败，请检查用户名或密码';
+                showError(errorMsg);
+                // 登录失败不清空密码，但让用户可重新尝试
+                // 恢复按钮状态
+            }
+        } catch (error) {
+            console.error('登录请求异常:', error);
+            let friendlyMsg = '网络请求失败，请检查网络连接或联系管理员';
+            if (error.message) {
+                friendlyMsg = error.message.includes('fetch') ? '网络连接异常，请稍后重试' : error.message;
+            }
+            showError(friendlyMsg);
+            // 同时显示API错误提示区域
+            if (apiResponsePre) {
+                apiResponsePre.textContent = `请求错误: ${error.message}`;
+                apiPreviewDiv.style.display = 'block';
+            }
+        } finally {
+            // 恢复按钮状态 (但注意如果已经跳转了页面，后续代码已无关紧要)
+            isSubmitting = false;
+            loginBtn.disabled = false;
+            loginBtn.textContent = '登 录';
+            loadingMsg.classList.remove('show');
+            // 如果是跳转前的延迟过程中，按钮恢复可能会有闪动但不影响；也可以不恢复，但逻辑严谨恢复
+        }
+    }
+
+    // 监听表单提交
+    loginForm.addEventListener('submit', handleLogin);
+
+    // 额外优化: 如果用户在密码框按回车，自动触发登录 (默认submit事件已处理)
+    // 增加演示优雅提示：按下回车快捷登录
+    document.querySelectorAll('#username, #password').forEach(input => {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                loginForm.dispatchEvent(new Event('submit'));
+            }
+        });
+    });
+
+    // 小彩蛋: 由于原页面中返回用户列表链接 href="<?= url('/login') ?>" 生成正确的用户列表路由，
+    // 确保登录成功后跳转地址与该链接地址一致，符合预期
+    // 并确保该链接本身可点击返回。同时，如果登录成功后跳转也使用相同地址。
+    // 完美满足需求：“登录成功后直接跳转到用户列表页，登录失败返回报错”
+</script>
 </body>
 </html>

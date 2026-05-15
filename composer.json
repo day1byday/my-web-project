@@ -20,6 +20,7 @@
         }
     ],
     "require": {
+        "ext-json": "*",
         "php": ">=7.2.5",
         "topthink/framework": "^6.1.0",
         "topthink/think-orm": "^2.0",

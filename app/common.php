@@ -3,3 +3,4 @@
 
 // ---- 日志路径 ----
 define("LOG", "/log/".time()."/");
+define("ROOT_DIR", 'my-web-project/');

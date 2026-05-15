@@ -92,71 +92,23 @@ class Login extends BaseController
      */
     public function doLogin()
     {
-        // ============================================
-        // 1. 接收参数
-        // ============================================
-        // TP5: input('post.username') 或 $this->request->post('username')
-        // TP6: request()->post('username') 或 Request::post('username')
-        //      也可以 $this->request->post('username')
-        $username = Request::post('username');
-        $password = Request::post('password');
-
-        // ============================================
-        // 2. 参数验证
-        // ============================================
-        // TP5: $validate = $this->validate($data, 'app\validate\User');
-        //      或手动判断
-        // TP6: 官方推荐独立验证类 validate() 助手函数
-        if (empty($username) || empty($password)) {
-            return json(['code' => 1, 'msg' => '用户名或密码不能为空']);
-        }
-
-        // ============================================
-        // 3. 模型查询
-        // ============================================
-        // TP5: $this->userModel->where('username', $username)->find();
-        // TP6: 完全一致
-        $user = $this->userModel->findByUsername($username);
-
-        if (!$user) {
-            return json(['code' => 1, 'msg' => '用户不存在']);
-        }
-
-        // ============================================
-        // 4. 密码验证
-        // ============================================
-        // TP5: md5($password) === $user->password
-        // TP6: password_verify($password, $user->password)
-        if (!$user->checkPassword($password)) {
-            return json(['code' => 1, 'msg' => '密码错误']);
-        }
-
-        // ============================================
-        // 5. 更新登录信息
-        // ============================================
-        // TP5: $user->last_login_ip = request()->ip();
-        //      $user->last_login_time = time();
-        //      $user->save();
-        // TP6: 一致
-        $user->updateLoginInfo(Request::ip());
-
-        // ============================================
-        // 6. 返回结果
-        // ============================================
-        // TP5: $this->success('登录成功', 'url');
-        //      $this->error('登录失败');
-        // TP6: success/error 已移除！
-        //      统一用 return json() 或 redirect() 处理
-        return json([
-            'code' => 0,
-            'msg'  => '登录成功',
-            'data' => [
-                'id'       => $user->id,
-                'username' => $user->username,
-                'email'    => $user->email,
-            ],
-        ]);
+        $params = Request::param();
+        $params['ip'] = Request::ip();
+        $result = $this->userModel->doLogin($params);
+        return $result;
     }
+    /**
+     * 注册接口
+     */
+    public function signUp()
+    {
+        $params = Request::param();
+        $params['ip'] = Request::ip();
+        $result = $this->userModel->signUp($params);
+        return $result;
+    }
+
+
 
     /**
      * 演示: 动态路由传参

@@ -52,6 +52,61 @@ class User extends Model
      * TP6: config/database.php 里 auto_timestamp = true 全局开启
      *      模型无需额外配置
      */
+    /**
+     * 注册接口
+     * @param $data
+     * * @return array|string[]
+     */
+    public function signUp($data): array
+    {
+        $user = $this->findByUsername($data['username']);
+        if ($user) {
+            return ['code' => 4001, 'msg' => '用户名已存在，请修改后重试'];
+        }
+        $userData = [
+            'username'          => $data['username'],
+            'email'             => $data['email'],
+            'password'          => password_hash($data['password'], PASSWORD_DEFAULT),
+            'status'            => 1,
+            'last_login_ip'     => $data['ip'],
+            'last_login_time'   => time(),
+            'create_time'       => time(),
+            'update_time'       => time(),
+        ];
+        $res = $this->dbUser->save($userData);
+        if ($res) {
+            return ['code' => 4001, 'msg' => '用户创建失败'];
+        }
+        return ['code' => 0, 'msg' => 'success'];
+    }
+
+    /**
+     * 用户登录接口
+     * @param $data
+     * @return array|string[]
+     */
+    public function doLogin($data): array
+    {
+        if (empty($data['username']) && empty($data['email'])) {
+            return ['code' => '4001', 'msg' => '用户名或邮箱不能为空'];
+        }
+        $username = $data['username'];
+        $password = $data['password'];
+        $user = $this->findByUsername($username);
+        if (!$user) {
+            return ['code' => 4001, 'msg' => '用户不存在'];
+        }
+        if (!password_verify($password, $user['password'])) {
+            return ['code' => 4001, 'msg' => '用户名或密码错误'];
+        }
+        // 更新信息
+        $last_login_ip = $data['ip'];
+        $res = $this->dbUser->updateLogin($user['id'], $last_login_ip);
+        if (!$res) {
+            return ['code' => '4001', 'msg' => '信息更新失败'];
+        }
+        return ['code' => 0, 'msg' => 'success'];
+    }
 
     /**
      * 查询用户-登录验证用

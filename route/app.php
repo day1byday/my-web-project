@@ -43,6 +43,8 @@ Route::group('login', function () {
     Route::get('loginPage', 'Login/loginPage');
     // POST: 处理登录（接收表单参数）
     Route::post('doLogin', 'Login/doLogin');
+    // POST: 处理注册
+    Route::post('signUp', 'Login/signUp');
     // GET: 动态路由传参
     Route::get('profile/:id', 'Login/profile');
     // GET: 用户列表 API (JSON接口 - 供 Vue3 SPA 使用)

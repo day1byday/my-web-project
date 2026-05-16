@@ -52,6 +52,10 @@ class db_user extends Base
     {
         return $this->getOne(['username' => $username]);
     }
+    public function findByemail(string $email): ?array
+    {
+        return $this->getOne(['email' => $email]);
+    }
 
     /**
      * 更新登录信息

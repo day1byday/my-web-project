@@ -3,4 +3,5 @@
 
 // ---- 日志路径 ----
 define("LOG", "/log/".time()."/");
-define("ROOT_DIR", 'my-web-project/');
+// ---- 服务器文件路径 ----
+define("ROOT_DIR", '/www/wwwroot/111.228.18.210_1000/my-web-project/');

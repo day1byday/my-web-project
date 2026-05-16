@@ -3,7 +3,6 @@ namespace app\controller;
 
 use app\BaseController;
 use app\model\User;
-use think\facade\View;
 use think\facade\Request;
 use think\App;
 
@@ -33,13 +32,11 @@ class Login extends BaseController
      * @var User
      */
     protected $userModel;
-    protected $viewModel;
 
     public function __construct(App $app)
     {
         parent::__construct($app);
         $this->userModel = new User();
-        $this->viewModel = new View();
     }
     
     /**
@@ -48,20 +45,8 @@ class Login extends BaseController
      */
     public function index()
     {
-        // === 视图赋值 ===
-        // TP5: $this->assign('title', '用户管理');
-        // TP6: View::assign() 或 $this->view->assign()
-//        $this->viewModel->assign('title', '用户管理 - TP6 示例');
-
         // === 模型查询 ===
         $users = $this->userModel->get_list();
-
-        // === 视图渲染 ===
-        // TP5: return $this->fetch('index', ['users' => $users]);
-        // TP6: View::fetch() 或 return view()
-        //      建议用 View::fetch() 风格更统一
-//        $this->viewModel->assign('users', $users);
-//        return $this->viewModel->fetch('login/index');
         $data['title'] = '用户管理 - TP6 示例';
         $data['users'] = $users;
         return view('login/index',$data);
@@ -73,12 +58,7 @@ class Login extends BaseController
      */
     public function loginPage()
     {
-
-//        $this->viewModel->assign('title', '用户登录 - TP6 示例');
         $data['title'] = '用户登录';
-        // TP5: return $this->fetch();
-        // TP6: return View::fetch();
-//        return $this->viewModel->fetch('login/login');//, ['title' => '用户登录']
         return view('login/login',$data);
     }
 
@@ -92,9 +72,45 @@ class Login extends BaseController
      */
     public function doLogin()
     {
+        // 输入校验
+        $validate = new \app\model\ModelValidate();
+        $check = $validate->check(
+            [
+                'username' => 'isEmpty:username,email',
+                'password' => 'require|min:6',
+            ],
+            [
+                'username.isEmpty' => '用户名或邮箱至少填写一项',
+                'password.require' => '密码不能为空',
+                'password.min'     => '密码长度不能少于6位',
+            ],
+            Request::param()
+        );
+        if ($check['code'] !== 0) {
+            return $check;
+        }
+
         $params = Request::param();
         $params['ip'] = Request::ip();
         $result = $this->userModel->doLogin($params);
+
+        // 登录成功，写入 session 维持登录态
+        if ($result['code'] === 0) {
+            $user = null;
+            if (!empty($params['username'])) {
+                $user = \app\model\User::findByUsername($params['username']);
+            } elseif (!empty($params['email'])) {
+                $user = (new \db\db_user())->findByemail($params['email']);
+            }
+            if ($user) {
+                session('user', [
+                    'id'       => $user['id'],
+                    'username' => $user['username'],
+                    'email'    => $user['email'],
+                ]);
+            }
+        }
+
         return $result;
     }
     /**
@@ -102,6 +118,32 @@ class Login extends BaseController
      */
     public function signUp()
     {
+        // 输入校验
+        $validate = new \app\model\ModelValidate();
+        $check = $validate->check(
+            [
+                'username'  => 'require|min:2|max:20',
+                'password'  => 'require|min:6',
+                'password2' => 'require|confirm:password',
+                'email'     => 'require|email',
+            ],
+            [
+                'username.require'   => '用户名不能为空',
+                'username.min'       => '用户名至少2位',
+                'username.max'       => '用户名不能超过20位',
+                'password.require'   => '密码不能为空',
+                'password.min'       => '密码至少6位',
+                'password2.require'  => '请再次输入密码',
+                'password2.confirm'  => '两次密码输入不一致',
+                'email.require'      => '邮箱不能为空',
+                'email.email'        => '邮箱格式不正确',
+            ],
+            Request::param()
+        );
+        if ($check['code'] !== 0) {
+            return $check;
+        }
+
         $params = Request::param();
         $params['ip'] = Request::ip();
         $result = $this->userModel->signUp($params);

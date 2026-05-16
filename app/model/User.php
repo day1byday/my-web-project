@@ -63,6 +63,13 @@ class User extends Model
         if ($user) {
             return ['code' => 4001, 'msg' => '用户名已存在，请修改后重试'];
         }
+        $user2 = $this->dbUser->findByemail($data['email']);
+        if ($user2) {
+            return ['code' => 4001, 'msg' => '该邮箱已存在，请修改后重试'];
+        }
+        if (empty($data['password2']) && $data['password'] != $data['password2']) {
+            return ['code' => 4001, 'msg' => '确认密码错误'];
+        }
         $userData = [
             'username'          => $data['username'],
             'email'             => $data['email'],
@@ -74,7 +81,7 @@ class User extends Model
             'update_time'       => time(),
         ];
         $res = $this->dbUser->save($userData);
-        if ($res) {
+        if (!$res) {
             return ['code' => 4001, 'msg' => '用户创建失败'];
         }
         return ['code' => 0, 'msg' => 'success'];
@@ -88,12 +95,18 @@ class User extends Model
     public function doLogin($data): array
     {
         if (empty($data['username']) && empty($data['email'])) {
-            return ['code' => '4001', 'msg' => '用户名或邮箱不能为空'];
+            return ['code' => 4001, 'msg' => '用户名或邮箱不能为空'];
         }
         $username = $data['username'];
         $password = $data['password'];
-        $user = $this->findByUsername($username);
+        $email = $data['email'];
+        if (empty($username) && !empty($data['email'])) {
+            $user = $this->dbUser->findByemail($email);
+        }else {
+            $user = $this->findByUsername($username);
+        }
         if (!$user) {
+
             return ['code' => 4001, 'msg' => '用户不存在'];
         }
         if (!password_verify($password, $user['password'])) {
@@ -103,7 +116,7 @@ class User extends Model
         $last_login_ip = $data['ip'];
         $res = $this->dbUser->updateLogin($user['id'], $last_login_ip);
         if (!$res) {
-            return ['code' => '4001', 'msg' => '信息更新失败'];
+            return ['code' => 4001, 'msg' => '信息更新失败'];
         }
         return ['code' => 0, 'msg' => 'success'];
     }

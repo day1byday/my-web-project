@@ -368,6 +368,132 @@
             .nav-links { display: none; }
             .card-grid { grid-template-columns: 1fr; }
         }
+
+        /* ========== 弹窗样式 ========== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 36px 32px;
+            width: 380px;
+            max-width: 90vw;
+            animation: modalIn 0.3s ease-out;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal h3 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .modal form { display: flex; flex-direction: column; gap: 14px; }
+        .modal input {
+            padding: 11px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.04);
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .modal input:focus { border-color: var(--blue); }
+        .modal .btn-submit {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: var(--blue);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 4px;
+        }
+        .modal .btn-submit:hover {
+            background: var(--blue-light);
+            box-shadow: 0 4px 16px rgba(91,141,239,0.35);
+        }
+        .modal p {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+        .modal p a {
+            color: var(--blue);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .modal p a:hover { text-decoration: underline; }
+        .modal-close {
+            position: absolute;
+            top: 12px; right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .modal-msg {
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 12px;
+            text-align: center;
+            animation: modalIn 0.2s ease-out;
+        }
+        .modal-msg.error {
+            background: rgba(240, 70, 70, 0.12);
+            color: #f06060;
+            border: 1px solid rgba(240, 70, 70, 0.2);
+        }
+        .modal-msg.success {
+            background: rgba(78, 201, 176, 0.12);
+            color: var(--green);
+            border: 1px solid rgba(78, 201, 176, 0.2);
+        }
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        /* 投喂弹窗 */
+        .modal-feed {
+            max-width: 420px;
+            text-align: center;
+        }
+        .modal-feed h3 {
+            margin-bottom: 20px;
+        }
+        .feed-img-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        .feed-img {
+            width: 100%;
+            max-width: 320px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .feed-tip {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
     </style>
 </head>
 <body>
@@ -382,6 +508,7 @@
         <li><a href="#home">首页</a></li>
         <li><a href="#tools">开发工具</a></li>
         <li><a href="#games">小游戏</a></li>
+        <li><a href="#" id="navFeed">投喂</a></li>
     </ul>
     <div class="nav-auth">
         <a href="#login" class="btn-login">登录</a>
@@ -552,11 +679,11 @@
     <div class="modal">
         <button class="modal-close" id="loginClose">&times;</button>
         <h3>登录</h3>
-        <form onsubmit="return false">
-            <input type="text" placeholder="用户名">
-            <input type="email" placeholder="邮箱">
-            <input type="password" placeholder="密码">
-            <button type="submit" class="btn-submit">登 录</button>
+        <div class="modal-msg" id="loginMsg" style="display:none"></div>
+        <form id="loginForm">
+            <input type="text" id="loginUsername" placeholder="用户名 / 邮箱" autocomplete="username">
+            <input type="password" id="loginPassword" placeholder="密码" autocomplete="current-password">
+            <button type="submit" class="btn-submit" id="loginBtn">登 录</button>
         </form>
         <p>还没有账号？<a href="#" id="switchToRegister">立即注册</a></p>
     </div>
@@ -566,98 +693,29 @@
     <div class="modal">
         <button class="modal-close" id="registerClose">&times;</button>
         <h3>注册</h3>
-        <form onsubmit="return false">
-            <input type="text" placeholder="用户名">
-            <input type="email" placeholder="邮箱">
-            <input type="password" placeholder="密码">
-            <input type="password" placeholder="确认密码">
-            <button type="submit" class="btn-submit">注 册</button>
+        <div class="modal-msg" id="regMsg" style="display:none"></div>
+        <form id="registerForm">
+            <input type="text" id="regUsername" placeholder="用户名" autocomplete="username">
+            <input type="email" id="regEmail" placeholder="邮箱" autocomplete="email">
+            <input type="password" id="regPassword" placeholder="密码" autocomplete="new-password">
+            <input type="password" id="regPassword2" placeholder="确认密码">
+            <button type="submit" class="btn-submit" id="regBtn">注 册</button>
         </form>
         <p>已有账号？<a href="#" id="switchToLogin">立即登录</a></p>
     </div>
 </div>
 
-<style>
-    /* 弹窗样式 */
-    .modal-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 9999;
-        background: rgba(0,0,0,0.6);
-        backdrop-filter: blur(6px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .modal {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 36px 32px;
-        width: 380px;
-        max-width: 90vw;
-        animation: modalIn 0.3s ease-out;
-    }
-    @keyframes modalIn {
-        from { opacity: 0; transform: scale(0.95) translateY(10px); }
-        to { opacity: 1; transform: scale(1) translateY(0); }
-    }
-    .modal h3 {
-        font-size: 22px;
-        font-weight: 600;
-        margin-bottom: 24px;
-        text-align: center;
-    }
-    .modal form { display: flex; flex-direction: column; gap: 14px; }
-    .modal input {
-        padding: 11px 14px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        background: rgba(255,255,255,0.04);
-        color: var(--text);
-        font-size: 14px;
-        outline: none;
-        transition: border-color 0.3s;
-    }
-    .modal input:focus { border-color: var(--blue); }
-    .modal .btn-submit {
-        padding: 12px;
-        border: none;
-        border-radius: 8px;
-        background: var(--blue);
-        color: #fff;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-        margin-top: 4px;
-    }
-    .modal .btn-submit:hover {
-        background: var(--blue-light);
-        box-shadow: 0 4px 16px rgba(91,141,239,0.35);
-    }
-    .modal p {
-        text-align: center;
-        margin-top: 18px;
-        font-size: 13px;
-        color: var(--text-dim);
-    }
-    .modal p a {
-        color: var(--blue);
-        text-decoration: none;
-        cursor: pointer;
-    }
-    .modal p a:hover { text-decoration: underline; }
-    .modal-close {
-        position: absolute;
-        top: 12px; right: 16px;
-        background: none;
-        border: none;
-        color: var(--text-dim);
-        font-size: 24px;
-        cursor: pointer;
-    }
-</style>
+<!-- ==================== 投喂弹窗 ==================== -->
+<div class="modal-overlay" id="feedModal" style="display:none">
+    <div class="modal modal-feed">
+        <button class="modal-close" id="feedClose">&times;</button>
+        <h3>投喂作者</h3>
+        <div class="feed-img-wrap">
+            <img src="/static/image.png" alt="投喂二维码" class="feed-img">
+            <p class="feed-tip">感谢支持，扫码投喂 ~</p>
+        </div>
+    </div>
+</div>
 
 <script>
     /* ===== 导航栏滚动 ===== */
@@ -679,8 +737,10 @@
     }
 
     /* ===== 登录 / 注册弹窗 ===== */
-    const loginModal = document.getElementById('loginModal');
+    const loginModal   = document.getElementById('loginModal');
     const registerModal = document.getElementById('registerModal');
+    const loginMsg     = document.getElementById('loginMsg');
+    const regMsg       = document.getElementById('regMsg');
 
     function openModal(id) {
         document.getElementById(id).style.display = 'flex';
@@ -690,16 +750,192 @@
         registerModal.style.display = 'none';
     }
 
-    document.querySelector('.btn-login').addEventListener('click', e => { e.preventDefault(); openModal('loginModal'); });
-    document.querySelector('.btn-register').addEventListener('click', e => { e.preventDefault(); openModal('registerModal'); });
+    /* ----- 消息提示 ----- */
+    function showMsg(el, text, type) {
+        el.textContent = text;
+        el.className   = 'modal-msg ' + type;
+        el.style.display = 'block';
+    }
+    function hideMsg(el) {
+        el.style.display = 'none';
+    }
+
+    /* ----- 按钮加载态 ----- */
+    function setLoading(btn, loading) {
+        btn.disabled = loading;
+        btn.textContent = loading ? '处理中...' : (btn.dataset.label || btn.textContent);
+    }
+
+    document.querySelector('.btn-login').addEventListener('click', e => { e.preventDefault(); hideMsg(loginMsg); openModal('loginModal'); });
+    document.querySelector('.btn-register').addEventListener('click', e => { e.preventDefault(); hideMsg(regMsg); openModal('registerModal'); });
     document.getElementById('loginClose').addEventListener('click', closeModals);
     document.getElementById('registerClose').addEventListener('click', closeModals);
-    document.getElementById('switchToRegister').addEventListener('click', e => { e.preventDefault(); loginModal.style.display='none'; openModal('registerModal'); });
-    document.getElementById('switchToLogin').addEventListener('click', e => { e.preventDefault(); registerModal.style.display='none'; openModal('loginModal'); });
+    document.getElementById('switchToRegister').addEventListener('click', e => { e.preventDefault(); loginModal.style.display='none'; hideMsg(regMsg); openModal('registerModal'); });
+    document.getElementById('switchToLogin').addEventListener('click', e => { e.preventDefault(); registerModal.style.display='none'; hideMsg(loginMsg); openModal('loginModal'); });
+
+    // 投喂弹窗
+    const feedModal = document.getElementById('feedModal');
+    document.getElementById('navFeed').addEventListener('click', e => { e.preventDefault(); openModal('feedModal'); });
+    document.getElementById('feedClose').addEventListener('click', () => { feedModal.style.display = 'none'; });
+    feedModal.addEventListener('click', e => { if (e.target === feedModal) feedModal.style.display = 'none'; });
 
     // 点击遮罩关闭
     loginModal.addEventListener('click', e => { if (e.target === loginModal) closeModals(); });
     registerModal.addEventListener('click', e => { if (e.target === registerModal) closeModals(); });
+
+    /* ===== 登录 ===== */
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn  = document.getElementById('loginBtn');
+    loginBtn.dataset.label = loginBtn.textContent;
+
+    loginForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        hideMsg(loginMsg);
+
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+
+        if (!username) {
+            showMsg(loginMsg, '请输入用户名或邮箱', 'error');
+            return;
+        }
+        if (!password) {
+            showMsg(loginMsg, '请输入密码', 'error');
+            return;
+        }
+
+        setLoading(loginBtn, true);
+        try {
+            const body = new URLSearchParams();
+            // 判断输入是邮箱还是用户名
+            if (username.includes('@')) {
+                body.append('email', username);
+            } else {
+                body.append('username', username);
+            }
+            body.append('password', password);
+
+            const res = await fetch('/login/doLogin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            });
+            const data = await res.json();
+
+            if (data.code === 0) {
+                showMsg(loginMsg, '登录成功', 'success');
+                setTimeout(() => {
+                    closeModals();
+                    updateAuthUI();
+                }, 800);
+            } else {
+                showMsg(loginMsg, data.msg || '登录失败', 'error');
+            }
+        } catch (err) {
+            showMsg(loginMsg, '网络错误，请稍后重试', 'error');
+        } finally {
+            setLoading(loginBtn, false);
+        }
+    });
+
+    /* ===== 注册 ===== */
+    const registerForm = document.getElementById('registerForm');
+    const regBtn       = document.getElementById('regBtn');
+    regBtn.dataset.label = regBtn.textContent;
+
+    registerForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        hideMsg(regMsg);
+
+        const username  = document.getElementById('regUsername').value.trim();
+        const email     = document.getElementById('regEmail').value.trim();
+        const password  = document.getElementById('regPassword').value;
+        const password2 = document.getElementById('regPassword2').value;
+
+        if (!username) {
+            showMsg(regMsg, '请输入用户名', 'error');
+            return;
+        }
+        if (!email) {
+            showMsg(regMsg, '请输入邮箱', 'error');
+            return;
+        }
+        if (!password) {
+            showMsg(regMsg, '请输入密码', 'error');
+            return;
+        }
+        if (password.length < 6) {
+            showMsg(regMsg, '密码长度不能少于6位', 'error');
+            return;
+        }
+        if (password !== password2) {
+            showMsg(regMsg, '两次密码输入不一致', 'error');
+            return;
+        }
+
+        setLoading(regBtn, true);
+        try {
+            const body = new URLSearchParams();
+            body.append('username', username);
+            body.append('email', email);
+            body.append('password', password);
+            body.append('password2', password2);
+
+            const res = await fetch('/login/signUp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            });
+            const data = await res.json();
+
+            if (data.code === 0) {
+                showMsg(regMsg, '注册成功，即将跳转登录', 'success');
+                setTimeout(() => {
+                    registerModal.style.display = 'none';
+                    hideMsg(loginMsg);
+                    openModal('loginModal');
+                }, 1000);
+            } else {
+                showMsg(regMsg, data.msg || '注册失败', 'error');
+            }
+        } catch (err) {
+            showMsg(regMsg, '网络错误，请稍后重试', 'error');
+        } finally {
+            setLoading(regBtn, false);
+        }
+    });
+
+    /* ===== 登录后更新导航栏 ===== */
+    function updateAuthUI() {
+        const authDiv = document.querySelector('.nav-auth');
+        // 尝试从 session 取用户信息（通过接口）
+        fetch('/login/userList', { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.code === 0 && data.data && data.data.length > 0) {
+                    // 简单处理：显示已登录状态
+                    authDiv.innerHTML = `
+                        <span style="color:var(--green);font-size:13px;font-weight:600;">&#x2713; 已登录</span>
+                        <button class="btn-login" id="btnLogout" style="border-color:rgba(240,70,70,0.3);color:#f06060;">退出</button>
+                    `;
+                    document.getElementById('btnLogout').addEventListener('click', () => {
+                        // 清除 session（需要一个登出接口，这里简单刷新页面丢弃 session cookie）
+                        authDiv.innerHTML = `
+                            <a href="#login" class="btn-login">登录</a>
+                            <a href="#register" class="btn-register">注册</a>
+                        `;
+                        // 重新绑定登录注册按钮
+                        bindAuthButtons();
+                    });
+                }
+            })
+            .catch(() => {});
+    }
+
+    function bindAuthButtons() {
+        document.querySelector('.btn-login').addEventListener('click', e => { e.preventDefault(); hideMsg(loginMsg); openModal('loginModal'); });
+        document.querySelector('.btn-register').addEventListener('click', e => { e.preventDefault(); hideMsg(regMsg); openModal('registerModal'); });
+    }
 </script>
 
 </body>

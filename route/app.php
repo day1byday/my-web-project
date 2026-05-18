@@ -1,13 +1,4 @@
 <?php
-// +----------------------------------------------------------------------
-// | ThinkPHP [ WE CAN DO IT JUST THINK ]
-// +----------------------------------------------------------------------
-// | Copyright (c) 2006~2018 http://thinkphp.cn All rights reserved.
-// +----------------------------------------------------------------------
-// | Licensed ( http://www.apache.org/licenses/LICENSE-2.0 )
-// +----------------------------------------------------------------------
-// | Author: liu21st <liu21st@gmail.com>
-// +----------------------------------------------------------------------
 use think\facade\Route;
 
 // ============================================================
@@ -58,9 +49,24 @@ Route::group('login', function () {
 // TP6: Route::resource('user', 'User') 一键生成
 // Route::resource('user', 'User');
 
-// ---- 生产环境: SPA 兜底 ----
-// 所有未匹配路由返回 Vue3 SPA 入口，API 路由优先匹配不受影响
-// 开发环境用 localhost:3000 (Vite)，此规则不干扰
+// ---- 方案C: 首页路由 ----
+// GET / → 返回静态工具箱页面
+Route::get('/', function () {
+    $file = app()->getRootPath() . 'public/static/index.html';
+    if (!is_file($file)) {
+        return response('首页文件不存在', 404);
+    }
+    return response(file_get_contents($file))
+        ->header(['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// ---- 方案C: Vue SPA 兜底 ----
+// 所有未匹配路由返回 Vue3 SPA 入口（构建到 public/app/）
 Route::miss(function () {
-    return response(file_get_contents(app()->getRootPath() . 'public/static/index.html'));
+    $file = app()->getRootPath() . 'public/app/index.html';
+    if (!is_file($file)) {
+        return response('应用未构建，请先执行 npm run build', 404);
+    }
+    return response(file_get_contents($file))
+        ->header(['Content-Type' => 'text/html; charset=utf-8']);
 });

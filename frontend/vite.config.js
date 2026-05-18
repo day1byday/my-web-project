@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
+  base: '/app/',
   plugins: [vue()],
   server: {
     port: 3000,
@@ -14,8 +15,8 @@ export default defineConfig({
     }
   },
   build: {
-    // 生产构建输出到 TP6 的 public/static/ 目录
-    outDir: '../public/static',
+    // 方案C: Vue SPA 输出到 public/app/，URL 基路径 /app/
+    outDir: '../public/app',
     assetsDir: 'assets',
     emptyOutDir: true
   }

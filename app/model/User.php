@@ -33,9 +33,9 @@ class User extends Model
     public function __construct(array $data = [])
     {
         parent::__construct($data);
-        $this->dbUser    = new db_user();
-        $this->dbProduct = new db_product();
-        $this->dbOrder   = new db_order();
+        $this->dbUser    = new \db\db_user();
+        $this->dbProduct = new \db\db_product();
+        $this->dbOrder   = new \db\db_order();
     }
     /**
      * 关联的表名
@@ -76,9 +76,9 @@ class User extends Model
             'password'          => password_hash($data['password'], PASSWORD_DEFAULT),
             'status'            => 1,
             'last_login_ip'     => $data['ip'],
-            'last_login_time'   => time(),
-            'create_time'       => time(),
-            'update_time'       => time(),
+            'last_login_time'   => date('Y-m-d H:i:s'),
+            'create_time'       => date('Y-m-d H:i:s'),
+            'update_time'       => date('Y-m-d H:i:s'),
         ];
         $res = $this->dbUser->save($userData);
         if (!$res) {
@@ -97,16 +97,15 @@ class User extends Model
         if (empty($data['username']) && empty($data['email'])) {
             return ['code' => 4001, 'msg' => '用户名或邮箱不能为空'];
         }
-        $username = $data['username'];
-        $password = $data['password'];
-        $email = $data['email'];
+        $username = $data['username'] ?? '';
+        $password = $data['password'] ?? '';
+        $email    = $data['email'] ?? '';
         if (empty($username) && !empty($data['email'])) {
             $user = $this->dbUser->findByemail($email);
         }else {
             $user = $this->findByUsername($username);
         }
         if (!$user) {
-
             return ['code' => 4001, 'msg' => '用户不存在'];
         }
         if (!password_verify($password, $user['password'])) {
@@ -154,7 +153,7 @@ class User extends Model
         // TP6: 一致
         $this->save([
             'last_login_ip'   => $ip,
-            'last_login_time' => time(),
+            'last_login_time' => date('Y-m-d H:i:s'),
         ]);
     }
 

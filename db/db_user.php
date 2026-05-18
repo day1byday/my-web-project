@@ -64,7 +64,7 @@ class db_user extends Base
     {
         return $this->save([
             'last_login_ip'   => $ip,
-            'last_login_time' => time(),
+            'last_login_time' => date('Y-m-d H:i:s'),
         ], ['id' => $id]);
     }
 
@@ -119,8 +119,8 @@ class db_user extends Base
             'username'    => $username,
             'password'    => password_hash($password, PASSWORD_DEFAULT),
             'email'       => $email,
-            'create_time' => time(),
-            'update_time' => time(),
+            'create_time' => date('Y-m-d H:i:s'),
+            'update_time' => date('Y-m-d H:i:s'),
         ]);
 
         return ['code' => 0, 'msg' => '注册成功', 'id' => $id];

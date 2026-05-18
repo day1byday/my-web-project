@@ -87,7 +87,7 @@ class Login extends BaseController
             Request::param()
         );
         if ($check['code'] !== 0) {
-            return $check;
+            return json($check);
         }
 
         $params = Request::param();
@@ -111,7 +111,7 @@ class Login extends BaseController
             }
         }
 
-        return $result;
+        return json($result);
     }
     /**
      * 注册接口
@@ -141,13 +141,13 @@ class Login extends BaseController
             Request::param()
         );
         if ($check['code'] !== 0) {
-            return $check;
+            return json($check);
         }
 
         $params = Request::param();
         $params['ip'] = Request::ip();
         $result = $this->userModel->signUp($params);
-        return $result;
+        return json($result);
     }
 
 

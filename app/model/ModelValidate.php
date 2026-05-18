@@ -1,22 +1,10 @@
 <?php
 namespace app\model;
 
-use think\Model;
-use db\db_user;
-use db\db_product;
-use db\db_order;
+// 验证工具类，不继承 Model，不关联数据库表
 
-// 验证方法
-
-class ModelValidate extends Model
+class ModelValidate
 {
-    function __construct(array $data = [])
-    {
-        parent::__construct($data);
-        $this->dbUser    = new db_user();
-        $this->dbProduct = new db_product();
-        $this->dbOrder   = new db_order();
-    }
 
     /**
      * 参数校验入口

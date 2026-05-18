@@ -1,20 +1,10 @@
 <?php
 namespace app\model;
 
-use think\Model;
-use db\db_user;
-use db\db_product;
-use db\db_order;
+// 格式处理工具类，不继承 Model，不关联数据库表
 
-class ModelFormat extends Model
+class ModelFormat
 {
-    function __construct(array $data = [])
-    {
-        parent::__construct($data);
-        $this->dbUser    = new db_user();
-        $this->dbProduct = new db_product();
-        $this->dbOrder   = new db_order();
-    }
 
     /**
      * 接收前端 JSON 数据并格式化输出

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>斗地主 | madmic</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/jquery-1.8.3.min.js"></script>
+    <script src="js/yinghua.js"></script>
+    <style>
+        input::-webkit-input-placeholder { color: white; }
+    </style>
+</head>
+<body class="login-page">
+    <div class="login-logo"></div>
+    <div class="login-form">
+        <input type="text" id="ddz_user" class="input-user" placeholder="账号/邮箱" autocomplete="off">
+        <input type="password" id="ddz_pwd" class="input-pwd" placeholder="密码">
+        <button type="button" class="btn-login" id="btn-login"></button>
+        <div class="login-error" id="login-error"></div>
+    </div>
+
+    <script>
+    (function () {
+        var baseUrl = window.location.pathname.replace(/\/public\/login\.html$/, '');
+
+        function showError(msg) {
+            $('#login-error').text(msg).show();
+            setTimeout(function () { $('#login-error').fadeOut(); }, 3000);
+        }
+
+        function doLogin() {
+            var user = $.trim($('#ddz_user').val());
+            var pwd = $('#ddz_pwd').val();
+
+            if (!user || !pwd) {
+                showError('请输入账号和密码');
+                return;
+            }
+
+            $.ajax({
+                method: 'POST',
+                url: baseUrl + '/api/login/index.php',
+                contentType: 'application/json',
+                data: JSON.stringify({ mail: user, password: pwd }),
+                success: function (res) {
+                    if (res.code === 200) {
+                        window.location.href = baseUrl + '/index.php';
+                    } else {
+                        showError(res.message || '登录失败');
+                    }
+                },
+                error: function (xhr) {
+                    try {
+                        var err = JSON.parse(xhr.responseText);
+                        showError(err.message || '登录失败');
+                    } catch (e) {
+                        showError('网络错误，请重试');
+                    }
+                }
+            });
+        }
+
+        // 按钮点击
+        $('#btn-login').on('click', doLogin);
+
+        // 回车键登录
+        $('#ddz_user, #ddz_pwd').on('keydown', function (e) {
+            if (e.keyCode === 13) doLogin();
+        });
+
+        // 自动聚焦
+        $('#ddz_user').focus();
+    })();
+    </script>
+</body>
+</html>

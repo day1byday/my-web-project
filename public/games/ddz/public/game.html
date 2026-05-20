@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>斗地主 | madmic</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/jquery-1.8.3.min.js"></script>
+    <script src="js/yinghua.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/poll.js"></script>
+    <script src="js/card.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+</head>
+<body class="game-page">
+
+    <!-- ═══ 地主底牌区 ═══ -->
+    <div id="landlord-cards" class="landlord-cards">
+        <img src="img/ui/tab_choose.png" style="position:absolute;z-index:-1;">
+    </div>
+
+    <!-- ═══ 弃牌堆 ═══ -->
+    <div id="discard-pile" class="discard-pile"></div>
+
+    <!-- ═══ 我的手牌区 ═══ -->
+    <div id="my-hand" class="hand-cards"></div>
+
+    <!-- ═══ 我的信息（底部左侧） ═══ -->
+    <div id="my-info" class="player-tag-left"></div>
+
+    <!-- ═══ 下家信息（顶部右侧） ═══ -->
+    <div id="next-info" class="player-tag-right"></div>
+
+    <!-- ═══ 上家信息（顶部左侧） ═══ -->
+    <div id="prev-info" class="player-tag-top-left"></div>
+
+    <!-- ═══ 功能区按钮 ═══ -->
+    <div id="action-area" class="action-buttons"></div>
+
+    <!-- ═══ Toast 提示 ═══ -->
+    <div id="toast" class="error-toast"></div>
+
+</body>
+</html>

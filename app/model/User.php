@@ -3,8 +3,6 @@ namespace app\model;
 
 use think\Model;
 use db\db_user;
-use db\db_product;
-use db\db_order;
 
 /**
  * ============================================================
@@ -25,17 +23,13 @@ use db\db_order;
  */
 class User extends Model
 {
-    // db 封装层实例（构造函数中初始化一次，所有方法共用）
+    // db 封装层实例
     protected $dbUser;
-    protected $dbProduct;
-    protected $dbOrder;
 
     public function __construct(array $data = [])
     {
         parent::__construct($data);
-        $this->dbUser    = new \db\db_user();
-        $this->dbProduct = new \db\db_product();
-        $this->dbOrder   = new \db\db_order();
+        $this->dbUser = new \db\db_user();
     }
     /**
      * 关联的表名
@@ -168,13 +162,5 @@ class User extends Model
             ->field('id,username,email,status,last_login_time,create_time')
             ->select()
             ->toArray();
-    }
-    public function get_info()
-    {
-        $user    = $this->dbUser->findByUsername('admin');
-        $order   = $this->dbOrder->get_info('ORD001');
-        $product = $this->dbProduct->get_info('1');
-
-        return compact('user', 'order', 'product');
     }
 }

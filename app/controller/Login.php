@@ -40,35 +40,7 @@ class Login extends BaseController
     }
     
     /**
-     * 首页 - 用户列表（演示 Model 查询 + View 传参）
-     * 浏览器访问: http://localhost:8001/login
-     */
-    public function index()
-    {
-        // === 模型查询 ===
-        $users = $this->userModel->get_list();
-        $data['title'] = '用户管理 - TP6 示例';
-        $data['users'] = $users;
-        return view('login/index',$data);
-    }
-
-    /**
-     * 显示登录页面（GET 请求）
-     * 浏览器访问: http://localhost:8001/login/loginPage
-     */
-    public function loginPage()
-    {
-        $data['title'] = '用户登录';
-        return view('login/login',$data);
-    }
-
-    /**
      * 处理登录（POST 请求）
-     * 演示: 接收参数 + 模型查询 + 密码验证 + 跳转
-     *
-     * 测试方法（终端执行）:
-     *   curl -X POST http://localhost:8001/login/doLogin \
-     *     -d "username=admin&password=password"
      */
     public function doLogin()
     {
@@ -153,36 +125,7 @@ class Login extends BaseController
 
 
     /**
-     * 演示: 动态路由传参
-     * 浏览器访问: http://localhost:8001/login/profile/1
-     *
-     * TP5: public function profile($id)     // URL: /login/profile/id/1
-     * TP6: public function profile($id)     // URL: /login/profile/1
-     *      路由定义方式变了，但控制器方法签名一致
-     */
-    public function profile($id)
-    {
-        // TP5: $this->userModel->get($id) 或 $this->userModel->find($id)
-        // TP6: 完全一致
-        $user = $this->userModel->find($id);
-
-        if (!$user) {
-            return json(['code' => 1, 'msg' => '用户不存在']);
-        }
-
-        return json([
-            'code' => 0,
-            'data' => [
-                'id'       => $user->id,
-                'username' => $user->username,
-                'email'    => $user->email,
-                'status'   => $user->status,
-            ],
-        ]);
-    }
-
-    /**
-     * 用户列表 API（JSON）- 供 Vue3 SPA 调用
+     * 用户列表 API（JSON）- 供前端调用
      * GET /login/userList
      */
     public function userList()
@@ -200,27 +143,5 @@ class Login extends BaseController
             ];
         }
         return json(['code' => 0, 'data' => $list, 'msg' => 'success']);
-    }
-
-    /**
-     * 演示: 手动 Db 查询（不经过模型）
-     * TP5: use think\Db;
-     * TP6: use think\facade\Db;
-     * 浏览器访问: http://localhost:8001/login/dbTest
-     */
-    public function dbTest()
-    {
-        // TP5: Db::table('users')->where('id', 1)->find();
-        // TP6: 完全一致
-        // 注意：表名已从 users 改为 user
-        $dbResult = \think\facade\Db::table('user')
-            ->where('id', 1)
-            ->find();
-
-        return json([
-            'code' => 0,
-            'msg'  => 'Db 门面查询测试',
-            'data' => $dbResult,
-        ]);
     }
 }

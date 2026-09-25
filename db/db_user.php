@@ -1,49 +1,14 @@
 <?php
 /**
- * ============================================================
  * User 表数据库操作封装层
- * ============================================================
- *
- * 继承 db\Base，无需重复编写 CRUD 方法
- * 本类只放 user 表特有的业务逻辑
- *
- * 变动说明：
- *   1. 去掉复制到每个方法里的 Db::table('user')，统一在 Base 类中管理
- *   2. 去掉有问题的 save_data()，用 Base::save() 替代
- *   3. 所有方法改为实例调用（构造器接管表名）
- *
- * 使用示例：
- *   use db\db_user;
- *   $db = new db_user();
- *
- *   // 新增
- *   $newId = $db->save(['username'=>'test', 'password'=>'...']);
- *
- *   // 更新
- *   $rows  = $db->save(['email'=>'new@x.com'], ['id'=>1]);
- *
- *   // 查询
- *   $user  = $db->getById(1);
- *   $list  = $db->getList(['status'=>1]);
- *   $page  = $db->getPage(1, 10);
- *
- *   // 业务方法
- *   $login = $db->login('admin', 'password');
- *   $reg   = $db->register('test', '123456');
+ * 只负责 user 表的数据访问，不包含业务逻辑（业务在 app/common/service）
  */
 
 namespace db;
 
 class db_user extends Base
 {
-    /**
-     * 关联的表名（继承自 Base，这里只需设置即可）
-     */
     protected $table = 'user';
-
-    // ============================================================
-    //  user 表特有的快捷方法
-    // ============================================================
 
     /**
      * 按用户名精确查找
@@ -52,13 +17,37 @@ class db_user extends Base
     {
         return $this->getOne(['username' => $username]);
     }
-    public function findByemail(string $email): ?array
+
+    /**
+     * 按邮箱精确查找
+     */
+    public function findByEmail(string $email): ?array
     {
         return $this->getOne(['email' => $email]);
     }
 
     /**
-     * 更新登录信息
+     * 按手机号精确查找
+     */
+    public function findByMobile(string $mobile): ?array
+    {
+        return $this->getOne(['mobile' => $mobile]);
+    }
+
+    /**
+     * 按登录标识（用户名 / 邮箱 / 手机号）查找
+     */
+    public function findByLogin(string $identifier): ?array
+    {
+        return $this->table()
+            ->where('username', $identifier)
+            ->whereOr('email', $identifier)
+            ->whereOr('mobile', $identifier)
+            ->find();
+    }
+
+    /**
+     * 更新最后登录信息
      */
     public function updateLogin(int $id, string $ip): int
     {
@@ -68,62 +57,51 @@ class db_user extends Base
         ], ['id' => $id]);
     }
 
-    // ============================================================
-    //  封装好的业务流程
-    // ============================================================
-
     /**
-     * 登录验证
-     * @param  string $username
-     * @param  string $password  明文密码
-     * @return array              ['code'=>0|1, 'msg'=>'...', 'data'=>[...]]
+     * 登录失败：累计失败次数，超过阈值则锁定
      */
-    public function login(string $username, string $password): array
+    public function increaseFailedLogin(int $id, int $max, int $lockMinutes): void
     {
-        $user = $this->findByUsername($username);
+        $user = $this->getById($id);
         if (!$user) {
-            return ['code' => 1, 'msg' => '用户不存在'];
+            return;
         }
 
-        if (!password_verify($password, $user['password'])) {
-            return ['code' => 1, 'msg' => '密码错误'];
+        $count = (int) $user['failed_login_count'] + 1;
+        $data  = ['failed_login_count' => $count];
+
+        if ($count >= $max) {
+            $data['locked_until']     = date('Y-m-d H:i:s', time() + $lockMinutes * 60);
+            $data['failed_login_count'] = 0;
         }
 
-        $this->updateLogin((int) $user['id'], request()->ip());
-
-        return [
-            'code' => 0,
-            'msg'  => '登录成功',
-            'data' => [
-                'id'       => $user['id'],
-                'username' => $user['username'],
-                'email'    => $user['email'],
-            ],
-        ];
+        $this->save($data, ['id' => $id]);
     }
 
     /**
-     * 注册新用户（密码自动加密）
-     * @param  string $username
-     * @param  string $password  明文密码
-     * @param  string $email
-     * @return array              ['code'=>0|1, 'msg'=>'...', 'id'=>int]
+     * 重置失败计数（登录成功后）
      */
-    public function register(string $username, string $password, string $email = ''): array
+    public function resetFailedLogin(int $id): void
     {
-        if ($this->findByUsername($username)) {
-            return ['code' => 1, 'msg' => '用户名已存在', 'id' => 0];
-        }
-
-        $id = $this->save([
-            'username'    => $username,
-            'password'    => password_hash($password, PASSWORD_DEFAULT),
-            'email'       => $email,
-            'create_time' => date('Y-m-d H:i:s'),
-            'update_time' => date('Y-m-d H:i:s'),
-        ]);
-
-        return ['code' => 0, 'msg' => '注册成功', 'id' => $id];
+        $this->save(['failed_login_count' => 0, 'locked_until' => null], ['id' => $id]);
     }
 
+    /**
+     * 判断账号是否处于锁定状态
+     */
+    public function isLocked(array $user): bool
+    {
+        if (empty($user['locked_until'])) {
+            return false;
+        }
+        return strtotime($user['locked_until']) > time();
+    }
+
+    /**
+     * 递增安全版本号（密码/角色/状态变更时调用，用于即时吊销旧 token）
+     */
+    public function bumpSecurityVersion(int $id): void
+    {
+        $this->table()->where('id', $id)->inc('security_version', 1)->update();
+    }
 }

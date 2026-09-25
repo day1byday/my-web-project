@@ -1,0 +1,140 @@
+# ============================================================
+# 开发环境（全容器化）
+# 用途：所有服务组件 + PHP 应用均在 Docker 中运行
+#
+# 常用命令：
+#   启动全部        docker compose up -d
+#   重建 PHP        docker compose up -d --build php
+#   停止            docker compose down
+#   查看状态/日志   docker compose ps / docker compose logs -f php
+#   启动 ES(预留)   docker compose --profile es up -d
+# ============================================================
+
+name: my-web-project
+
+services:
+  # ---------- PHP 应用（内置服务器，开发用） ----------
+  php:
+    build:
+      context: .
+      dockerfile: docker/php-dev.Dockerfile
+    container_name: mwp-php
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/app
+    environment:
+      TZ: Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ---------- MySQL 8.0 ----------
+  mysql:
+    image: mysql:8.0.36
+    container_name: mwp-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-dev123456}
+      MYSQL_DATABASE: my_web_project
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ---------- Redis 7 ----------
+  redis:
+    image: redis:7.2-alpine
+    container_name: mwp-redis
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-dev123456}", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-dev123456}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ---------- RabbitMQ 3.13 + 管理台 ----------
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: mwp-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-mwp}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-dev123456}
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Web 管理界面 http://localhost:15672
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  # ---------- MinIO 对象存储（S3 兼容） ----------
+  minio:
+    image: minio/minio:latest
+    container_name: mwp-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER:-mwpadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-dev12345678}   # 至少 8 位
+    ports:
+      - "9000:9000"     # S3 API
+      - "9001:9001"     # Web 控制台 http://localhost:9001
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  # ---------- ElasticSearch 7.17（预留，默认不启动） ----------
+  # 启动方式：docker compose --profile es up -d
+  # 中文分词：启动后进入容器安装对应版本的 IK 插件：
+  #   docker exec -it mwp-elasticsearch sh -c \
+  #     "bin/elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-ik/7.17.22"
+  elasticsearch:
+    image: elasticsearch:7.17.22
+    container_name: mwp-elasticsearch
+    profiles: ["es"]
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+      - TZ=Asia/Shanghai
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+volumes:
+  mysql_data:
+  redis_data:
+  rabbitmq_data:
+  minio_data:
+  es_data:
